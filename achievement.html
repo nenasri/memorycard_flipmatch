@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Card Game - Achievements</title>
+<style>
+/* ===== GLOBAL ===== */
+body {
+  font-family: 'Fredoka One', cursive;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: url('background.jpg') no-repeat center center/cover;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ===== OVERLAY ANIMATION ===== */
+body::after {
+  content:"";
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -50%;
+  left: -50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+  animation: floatBg 30s linear infinite;
+  z-index: 0;
+}
+@keyframes floatBg {
+  0% { transform: rotate(0deg);}
+  100% { transform: rotate(360deg);}
+}
+
+/* ===== ACHIEVEMENT BOX ===== */
+#achievement-box {
+  max-width: 700px;
+  width: 90%;
+  background: rgba(255,255,255,0.95);
+  padding: 30px 20px;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(5px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* TITLE */
+h2 {
+  margin-bottom: 25px;
+  font-size: 32px;
+  color: #333;
+  text-shadow: 1px 1px 2px #fff;
+}
+
+/* PROGRESS BAR */
+.progress-container {
+  width: 80%;
+  height: 18px;
+  background: #ddd;
+  border-radius: 10px;
+  margin: 15px auto 20px;
+  overflow: hidden;
+}
+.progress-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #ffb347, #ffcc33);
+  border-radius: 10px;
+  transition: width 0.5s ease;
+}
+
+/* ACHIEVEMENT LIST */
+ul {
+  list-style: none;
+  padding: 0;
+  width: 100%;
+}
+li {
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  background-color: #eee;
+  border-radius: 10px;
+  font-size: 16px;
+  opacity: 0.6;
+  transition: all 0.4s ease;
+  position: relative;
+  cursor: default;
+  text-align: left;
+}
+li::after {
+  content: attr(title);
+  position: absolute;
+  left: 105%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #333;
+  color: #fff;
+  padding: 5px 8px;
+  border-radius: 5px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: 0.3s;
+  pointer-events: none;
+}
+li:hover::after { opacity: 1; }
+li.unlocked {
+  background-color: #9ae6b4;
+  opacity: 1;
+  font-weight: bold;
+  color: #045d3f;
+  animation: popBadge 0.6s forwards;
+  box-shadow: 0 0 15px #9ae6b4;
+}
+li.unlocked:hover {
+  transform: scale(1.05) rotate(-3deg);
+  box-shadow: 0 0 18px #9ae6b4;
+}
+@keyframes popBadge {
+  0% { transform: scale(0.2) rotate(0deg); opacity: 0; }
+  50% { transform: scale(1.2) rotate(15deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+/* BUTTONS */
+button {
+  margin: 8px 5px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(45deg, #ffb347, #ffcc33);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+button:hover {
+  transform: scale(1.05);
+  background: linear-gradient(45deg, #ffcc33, #ffb347);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+}
+button-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* CONFETTI */
+.confetti {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: fall 2s linear forwards;
+}
+@keyframes fall {
+  to { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width: 500px) {
+  #achievement-box { padding: 20px 15px; }
+  h2 { font-size: 26px; margin-bottom: 20px; }
+  li { font-size: 14px; padding: 10px 12px; }
+  button { font-size: 12px; padding: 8px 15px; margin: 5px; }
+  .progress-container { width: 90%; height: 14px; }
+}
+</style>
+</head>
+
+<body>
+
+<div id="achievement-box">
+  <h2>🏆 Achievements</h2>
+
+  <div class="progress-container">
+    <div class="progress-bar" id="progress"></div>
+  </div>
+
+  <ul>
+    <li id="a1" title="Flip your first card!">🎮 First Flip</li>
+    <li id="a2" title="Make your first match!">🧠 First Match</li>
+    <li id="a3" title="Complete a level in 20 moves or less!">⭐ Perfect Memory (≤ 20 Moves)</li>
+    <li id="a4" title="Complete the game!">🏅 Game Completed</li>
+    <li id="a5" title="Complete all levels!">🥇 Memory Master</li>
+  </ul>
+
+  <div style="display:flex; flex-wrap:wrap; justify-content:center;">
+    <button onclick="unlockFirstFlip()">Unlock First Flip</button>
+    <button onclick="unlockFirstMatch()">Unlock First Match</button>
+    <button onclick="completeGame()">Complete Game</button>
+    <button onclick="completeAllLevels()">Unlock Memory Master</button>
+    <button onclick="shareAchievement()">Share Achievement</button>
+    <button onclick="goBackHome()">Back</button>
+  </div>
+</div>
+
+<audio id="pop-sound" src="pop.mp3"></audio>
+
+<script>
+let moves = 18;
+function unlockAchievement(id) {
+  const li = document.getElementById(id);
+  if(!li.classList.contains('unlocked')) {
+    li.classList.add('unlocked');
+    createConfetti(li);
+    document.getElementById('pop-sound').play();
+    updateProgress();
+  }
+}
+function unlockFirstFlip() { unlockAchievement("a1"); }
+function unlockFirstMatch() { unlockAchievement("a2"); }
+function completeGame() { 
+  unlockAchievement("a4"); 
+  if(moves <= 20) unlockAchievement("a3");
+}
+function completeAllLevels() { unlockAchievement("a5"); }
+
+function updateProgress() {
+  const total = 5;
+  const unlocked = document.querySelectorAll('li.unlocked').length;
+  const percent = (unlocked / total) * 100;
+  document.getElementById('progress').style.width = percent + '%';
+}
+
+function createConfetti(target){
+  for(let i=0;i<10;i++){
+    const conf = document.createElement('div');
+    conf.className='confetti';
+    conf.style.background=`hsl(${Math.random()*360},100%,50%)`;
+    const rect = target.getBoundingClientRect();
+    conf.style.left = rect.left + Math.random()*rect.width + 'px';
+    conf.style.top = rect.top + 'px';
+    conf.style.width = conf.style.height = '6px';
+    document.body.appendChild(conf);
+    conf.animate([{transform:'translateY(0px)'},{transform:`translateY(${100+Math.random()*50}px) rotate(${Math.random()*360}deg)`}], {duration:1000 + Math.random()*500});
+    setTimeout(()=>conf.remove(),1200);
+  }
+}
+
+function shareAchievement() {
+  alert("🎉 Share your achievements to challenge friends!");
+}
+function goBackHome() {
+  window.location.href = "home.html";
+}
+</script>
+
+</body>
+</html>

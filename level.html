@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Setup</title>
+
+<style>
+/* ===== Global (UNCHANGED) ===== */
+body {
+  font-family: 'Arial', sans-serif;
+  color: white;
+  text-align: center;
+  min-height: 100vh;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)),
+              url('background.jpg') no-repeat center center fixed;
+  background-size: cover;
+  overflow-x: hidden;
+  position: relative;
+}
+
+h1 { 
+  margin-bottom: 15px; 
+  font-size: 3rem; 
+  text-shadow: 2px 2px 8px black; 
+  color: #fffacd;
+}
+h2 { 
+  margin: 10px 0 25px 0; 
+  font-size: 1.8rem; 
+  text-shadow: 1px 1px 4px black; 
+  color: #ffeb3b;
+}
+
+/* Mode buttons (UNCHANGED) */
+.modes button {
+  padding: 14px 28px;
+  margin: 10px;
+  cursor: pointer;
+  border: none;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  transition: transform 0.25s, box-shadow 0.25s, background 0.25s;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1));
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.modes button:hover {
+  transform: scale(1.12);
+  box-shadow: 0 0 20px #ffeb3b, 0 0 40px #ffd700;
+  background: linear-gradient(135deg, rgba(255,255,0,0.3), rgba(255,255,0,0.1));
+}
+.selected {
+  border: 2px solid #ffd700;
+  background: linear-gradient(135deg, rgba(255,255,0,0.3), rgba(255,255,0,0.1));
+  color: #ffd700;
+  box-shadow: 0 0 20px #ffeb3b, 0 0 40px #ffd700;
+}
+
+/* Level panel (UNCHANGED) */
+.panel { margin-top: 25px; }
+.level {
+  display: inline-block;
+  margin: 8px;
+  padding: 16px 22px;
+  cursor: pointer;
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1));
+  color: white;
+  text-align: center;
+  transition: transform 0.25s, box-shadow 0.25s, background 0.25s;
+  font-size: 1rem;
+}
+.level:hover {
+  transform: scale(1.12);
+  box-shadow: 0 0 18px #ffeb3b, 0 0 36px #ffd700;
+  background: linear-gradient(145deg, rgba(255,255,0,0.3), rgba(255,255,0,0.1));
+}
+.level.selected {
+  border: 2px solid #ffd700;
+  background: linear-gradient(145deg, rgba(255,255,0,0.3), rgba(255,255,0,0.1));
+  color: #ffd700;
+  box-shadow: 0 0 20px #ffeb3b, 0 0 40px #ffd700;
+}
+.face { font-size: 32px; margin-bottom: 6px; display:block; }
+
+/* Start & Back buttons (UNCHANGED) */
+button#startBtn, button#backBtn {
+  margin-top: 35px;
+  padding: 18px 44px;
+  font-size: 1.3rem;
+  font-weight: bold;
+  background: linear-gradient(135deg, #fff176, #ffd54f);
+  color: #333;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform 0.25s, box-shadow 0.25s;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+  width: 25%;
+  margin-left: 38%;
+}
+button#startBtn:hover, button#backBtn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 25px #ffeb3b, 0 0 45px #ffd700;
+}
+
+/* Your selection (UNCHANGED) */
+#modeLevel {
+  margin-top: 25px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-shadow: 2px 2px 6px black;
+  color: #ffeb3b;
+}
+
+/* Sparkle FIX (ONLY change) */
+.sparkle {
+  position: absolute;
+  font-size: 20px;
+  user-select: none;
+  pointer-events: none; /* 🔥 critical fix */
+  animation: fall 1.5s linear forwards, spinScale 1.5s linear forwards;
+  opacity: 1;
+}
+
+@keyframes fall {
+  0% { transform: translateY(0) rotate(0deg); opacity:1; }
+  100% { transform: translateY(150px) rotate(360deg); opacity:0; }
+}
+@keyframes spinScale {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+
+/* Responsive (UNCHANGED) */
+@media (max-width: 600px) {
+  .modes button, .level {
+    padding: 12px 16px;
+    font-size: 0.95rem;
+  }
+  .face { font-size: 26px; }
+  button#startBtn, button#backBtn {
+    padding: 16px 32px;
+    font-size: 1.1rem;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<h1>Setup Your Game</h1>
+
+<h2>Select Mode</h2>
+<div class="modes">
+  <button onclick="setMode('classic')" id="mode-classic">🟡 Classic Mode</button>
+  <button onclick="setMode('timer')" id="mode-timer">⏱️ Time Rush</button>
+  <button onclick="setMode('brain')" id="mode-brain">🧠 Brain Burst</button>
+  <button onclick="setMode('bomb')" id="mode-bomb">💣 Blast Escape</button>
+  <button onclick="setMode('buddy')" id="mode-buddy">👥 Buddy Battle</button>
+</div>
+
+<h2>Select Level</h2>
+<div class="panel">
+  <div class="level" onclick="selectLevel('easy')" id="level-easy">
+    <div class="face">🙂</div>
+    <span>EASY</span>
+  </div>
+  <div class="level" onclick="selectLevel('medium')" id="level-medium">
+    <div class="face">😐</div>
+    <span>MEDIUM</span>
+  </div>
+  <div class="level" onclick="selectLevel('hard')" id="level-hard">
+    <div class="face">😣</div>
+    <span>HARD</span>
+  </div>
+  <div class="level" onclick="selectLevel('master')" id="level-master">
+    <div class="face">😵</div>
+    <span>MASTER</span>
+  </div>
+  <div class="level" onclick="selectLevel('legend')" id="level-legend">
+    <div class="face">💀</div>
+    <span>LEGEND</span>
+  </div>
+</div>
+
+<!-- 🔥 ADDED: THEME SELECTION (NO SIZE CHANGE) -->
+<h2>Select Card Theme</h2>
+<div class="panel">
+  <div class="level" onclick="selectTheme('fruits')" id="theme-fruits"><div class="face">🍎</div>FRUITS</div>
+  <div class="level" onclick="selectTheme('animals')" id="theme-animals"><div class="face">🐶</div>ANIMALS</div>
+  <div class="level" onclick="selectTheme('faces')" id="theme-faces"><div class="face">😀</div>FACES</div>
+  <div class="level" onclick="selectTheme('sports')" id="theme-sports"><div class="face">⚽</div>SPORTS</div>
+  <div class="level" onclick="selectTheme('vehicles')" id="theme-vehicles"><div class="face">🚗</div>VEHICLES</div>
+  <div class="level" onclick="selectTheme('food')" id="theme-food"><div class="face">🍕</div>FOOD</div>
+  <div class="level" onclick="selectTheme('nature')" id="theme-nature"><div class="face">🌸</div>NATURE</div>
+  <div class="level" onclick="selectTheme('fantasy')" id="theme-fantasy"><div class="face">🧙</div>FANTASY</div>
+  <div class="level" onclick="selectTheme('space')" id="theme-space"><div class="face">🚀</div>SPACE</div>
+  <div class="level" onclick="selectTheme('weather')" id="theme-weather"><div class="face">🌧</div>WEATHER</div>
+</div>
+
+<h2>Your Selection:</h2>
+<div id="modeLevel"></div>
+
+<button id="startBtn">🎮 Start Game</button>
+<button id="backBtn" onclick="goBack()">Back to Home</button>
+
+<script>
+let mode = 'classic';
+let level = 'easy';
+let theme = 'fruits';
+
+/* Sparkle (UNCHANGED LOGIC) */
+function createSparkle(x, y){
+  const sparkles = ['✨','💫','⭐','🌟','🟡','🔵','🔴'];
+  const s = document.createElement('div');
+  s.classList.add('sparkle');
+  s.textContent = sparkles[Math.floor(Math.random()*sparkles.length)]; 
+  s.style.left = x + 'px';
+  s.style.top = y + 'px';
+  s.style.fontSize = (16 + Math.random()*12) + 'px';
+  document.body.appendChild(s);
+  setTimeout(()=>s.remove(),1500);
+}
+function sparkleEffect(e){ createSparkle(e.clientX, e.clientY); }
+
+/* Selection logic (ADDED theme only) */
+function setMode(m){ mode=m; highlight(); }
+function selectLevel(l){ level=l; highlight(); }
+function selectTheme(t){ theme=t; highlight(); }
+
+function highlight(){
+  document.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected'));
+  document.getElementById(`mode-${mode}`)?.classList.add('selected');
+  document.getElementById(`level-${level}`)?.classList.add('selected');
+  document.getElementById(`theme-${theme}`)?.classList.add('selected');
+  document.getElementById('modeLevel').textContent =
+    `${mode.toUpperCase()} MODE – ${level.toUpperCase()} LEVEL – ${theme.toUpperCase()} THEME`;
+}
+
+/* Start & Back (UNCHANGED) */
+document.getElementById('startBtn').onclick = ()=>{
+  window.location.href = `game.html?mode=${mode}&level=${level}&theme=${theme}`;
+};
+function goBack(){ window.location.href='home.html'; }
+
+/* Init */
+highlight();
+document.querySelectorAll('.modes button,.level')
+  .forEach(el=>el.addEventListener('click',sparkleEffect));
+
+  
+</script>
+
+</body>
+</html>

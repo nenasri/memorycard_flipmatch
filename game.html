@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flip & Match Game</title>
+<style>
+body {
+  font-family: 'Arial', sans-serif;
+  text-align: center;
+  background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('background.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: white;
+  margin: 0;
+  min-height: 100vh;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+h1 { margin: 20px 0 10px; font-size: 2.5rem; text-shadow: 2px 2px 5px black; }
+h2 { margin: 5px 0 20px; font-size: 1.5rem; text-shadow: 1px 1px 3px black; }
+
+#modesDisplay { margin-top: 10px; font-size: 1.1rem; text-shadow: 1px 1px 2px black; }
+#timer { font-size: 18px; font-weight: bold; margin-top: 10px; text-shadow: 1px 1px 3px black; transition: color 0.3s; }
+
+.container {
+  padding: 25px;
+  margin-top: 20px;
+  border: 3px solid white;
+  border-radius: 22px;
+  background-color: rgba(0,0,0,0.2);
+  box-shadow: 0 0 25px rgba(255, 235, 59, 0.6);
+  display: flex;
+  width: fit-content;
+  justify-content: center;
+}
+
+.buddy-container {
+  display: flex;
+  justify-content: center;
+  gap: 50px;
+  flex-wrap: wrap;
+  padding: 25px;
+  border: 3px solid white;
+  border-radius: 22px;
+  background-color: rgba(0,0,0,0.2);
+  box-shadow: 0 0 25px rgba(255, 235, 59, 0.6);
+}
+
+#gameBoard, #gameBoard1, #gameBoard2 {
+  display: grid;
+  gap: 12px;
+}
+
+.card {
+  width: 90px;
+  height: 100px;
+  background: linear-gradient(145deg, #ff9a9e, #fad0c4);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.3s, box-shadow 0.3s, opacity 0.3s, background 0.3s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  margin-left: 4px;
+}
+.card:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(255,255,255,0.7); }
+.card.flipped { background: linear-gradient(145deg, #fff3a1, #ffe57f); color: #333; transform: rotateY(180deg) scale(1.15); box-shadow: 0 0 20px #ffe57f; }
+.card.matched { animation: glow 0.6s alternate infinite; }
+.card.wrong { animation: shake 0.3s; }
+
+@keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 75% { transform: translateX(-6px); } 100% { transform: translateX(0); } }
+@keyframes glow { from { box-shadow: 0 0 12px yellow; } to { box-shadow: 0 0 28px orange; } }
+
+.blink { animation: blinkFade 0.8s ease-in-out; }
+@keyframes blinkFade { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+
+.explode { animation: explodeAnim 0.5s forwards; }
+@keyframes explodeAnim { 0% { transform: scale(1) rotate(0deg); opacity:1; } 100% { transform: scale(1.5) rotate(360deg); opacity:0; } }
+
+#score { margin-top: 20px; font-size: 20px; font-weight: bold; text-shadow: 1px 1px 3px black; }
+#backBtn {
+  margin-top: 20px;
+  padding: 14px 36px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  background-color: #ffeb3b;
+  color: #333;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+#backBtn:hover { transform: scale(1.05); box-shadow: 0 0 15px #ffeb3b; }
+
+#turnDisplay { margin-top: 10px; font-size: 20px; font-weight: bold; text-shadow: 1px 1px 3px black; }
+
+@media (max-width: 600px) {
+  .card { width: 80px; height: 80px; font-size: 36px; }
+  #score { font-size: 18px; }
+  #backBtn { padding: 12px 28px; font-size: 1rem; }
+}
+</style>
+</head>
+<body>
+
+<h1 id="modeLevel">Mode – Level</h1>
+<h2>Flip & Match Game</h2>
+<div id="modesDisplay"></div>
+<div id="timer"></div>
+
+<div class="container" id="singleContainer">
+  <div id="gameBoard"></div>
+</div>
+
+<div class="buddy-container" id="buddyContainer" style="display:none;">
+  <div id="gameBoard1"></div>
+  <div id="gameBoard2"></div>
+</div>
+
+<div id="score">Score: 0</div>
+<h2 id="turnDisplay"></h2>
+<button id="backBtn" onclick="goBack()">Back to Home</button>
+
+<audio id="flipSound" src="https://freesound.org/data/previews/522/522732_11612906-lq.mp3"></audio>
+<audio id="matchSound" src="https://freesound.org/data/previews/159/159408_2775872-lq.mp3"></audio>
+<audio id="winSound" src="https://freesound.org/data/previews/341/341695_6240215-lq.mp3"></audio>
+
+<script>
+//URL params
+const params = new URLSearchParams(window.location.search);
+const mode = params.get('mode') || 'classic';
+const level = params.get('level') || 'easy';
+const theme = params.get('theme') || 'fruits'; // NEW: get theme from URL
+
+// Number of pairs per level
+let pairs = {easy:3, medium:10, hard:15, master:25, legend:30}[level];
+
+// Emojis pool
+const themeEmojis = {
+    fruits: ['🍎','🍌','🍓','🍇','🍒','🍉','🥝','🍍','🥭','🍑'],
+    animals: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯'],
+    faces: ['😀','😅','😂','🤣','😊','😎','😍','😡','😱','🤯'],
+    sweets: ['🍫','🍬','🍭','🍪','🧁','🍩','🍨','🍧','🍮','🍯'],
+    nature: ['🌳','🌴','🌵','🌸','🌼','🌻','🍀','🍁','🍂','🌿'],
+    sports: ['⚽','🏀','🏈','⚾','🎾','🏐','🏉','🥏','🏓','🥊'],
+    travel: ['✈️','🚗','🚀','🚤','🚂','🚁','🚲','🛳️','🏖️','🏔️'],
+    music: ['🎹','🎷','🎺','🎸','🥁','🎻','🎧','🎼','🎤','🎵'],
+    shapes: ['⬛','⬜','🔺','🔷','🔶','🔹','🔸','⚫','⚪','🔻'],
+    emojis: ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇']
+};
+
+// Pick emojis from theme
+let emojis = themeEmojis[theme] || themeEmojis['fruits'];
+
+// Global variables
+let totalCards = pairs * 2;
+let cardsArray = emojis.slice(0,pairs).concat(emojis.slice(0,pairs));
+cardsArray.sort(() => Math.random()-0.5);
+
+const gameBoard = document.getElementById('gameBoard');
+const columns = Math.ceil(Math.sqrt(totalCards));
+gameBoard.style.gridTemplateColumns = `repeat(${columns},100px)`;
+
+// Sounds
+const flipSound = document.getElementById('flipSound');
+const matchSound = document.getElementById('matchSound');
+const winSound = document.getElementById('winSound');
+
+// Game variables
+let matchedPairs = 0;
+let score = 0;
+let moves = 0;
+let startTime = Date.now();
+let modeTimer;
+
+// Flipped cards tracker
+let flippedCards = [];
+
+// Display texts
+document.getElementById('modeLevel').textContent = `${mode.charAt(0).toUpperCase()+mode.slice(1)} Mode – ${level.charAt(0).toUpperCase()+level.slice(1)} Level`;
+document.getElementById('modesDisplay').textContent = `Mode Selected: ${mode.toUpperCase()}`;
+
+// Create single board
+function createSingleBoard(){
+    gameBoard.innerHTML = '';
+    cardsArray.forEach(emoji=>{
+        const card = document.createElement('div');
+        card.classList.add('card');
+        card.dataset.emoji = emoji;
+        gameBoard.appendChild(card);
+    });
+}
+
+// TIMER MODE
+function startTimer(seconds){
+    let timeLeft = seconds;
+    const timerDiv = document.getElementById('timer');
+    timerDiv.textContent = `Time Left: ${timeLeft}s`;
+
+    modeTimer = setInterval(()=>{
+        timeLeft--;
+        timerDiv.textContent = `Time Left: ${timeLeft}s`;
+        timerDiv.style.color = (timeLeft <= 10) ? 'red' : 'white';
+
+        if(timeLeft <= 0){
+            clearInterval(modeTimer);
+            goResult(false); // fail if time runs out
+        }
+    },1000);
+
+    // Standard flip & match logic for timer mode
+    startClassicMode(); 
+}
+
+//BRAIN BURST MODE//
+function startBrainBurst() {
+    // Clear board
+    gameBoard.innerHTML = '';
+    const maxMoves = {easy:5, medium:15, hard:25, master:40, legend:50}[level];
+    moves = 0;
+    matchedPairs = 0;
+
+    // Shuffle cards
+    let cardsArray = emojis.slice(0, pairs).concat(emojis.slice(0, pairs));
+    cardsArray.sort(() => Math.random() - 0.5);
+
+    // Create grid
+    const columns = Math.ceil(Math.sqrt(cardsArray.length));
+    gameBoard.style.gridTemplateColumns = `repeat(${columns}, 100px)`;
+
+    // Create card elements
+    const allCards = [];
+    cardsArray.forEach(emoji => {
+        const card = document.createElement('div');
+        card.classList.add('card');
+        card.dataset.emoji = emoji;
+        gameBoard.appendChild(card);
+        allCards.push(card);
+    });
+
+    flippedCards = [];
+
+    // MEMORIZATION PHASE
+    allCards.forEach(card => {
+        card.textContent = card.dataset.emoji;
+        card.classList.add('flipped');
+        card.style.pointerEvents = 'none';
+    });
+
+    setTimeout(() => {
+        allCards.forEach(card => {
+            card.textContent = '';
+            card.classList.remove('flipped');
+            card.style.pointerEvents = 'auto';
+        });
+    }, 3000); // 3s
+
+    // Display initial moves
+    const turnDisplay = document.getElementById('turnDisplay');
+    turnDisplay.textContent = `Moves: ${moves} / ${maxMoves}`;
+
+    // PLAYER CLICK LOGIC
+    allCards.forEach(card => {
+        card.addEventListener('click', () => {
+            if(card.classList.contains('flipped') || flippedCards.length === 2) return;
+
+            card.textContent = card.dataset.emoji;
+            card.classList.add('flipped');
+            flipSound.currentTime = 0; flipSound.play();
+            flippedCards.push(card);
+
+            if(flippedCards.length === 2){
+                moves++;
+                turnDisplay.textContent = `Moves: ${moves} / ${maxMoves}`; // Update moves display
+
+                const [c1,c2] = flippedCards;
+
+                setTimeout(() => {
+                    if(c1.dataset.emoji === c2.dataset.emoji){
+                        matchedPairs++;
+                        score += 10;
+                        c1.classList.add('matched');
+                        c2.classList.add('matched');
+                        matchSound.currentTime = 0; matchSound.play();
+                    } else {
+                        c1.classList.add('wrong');
+                        c2.classList.add('wrong');
+                        setTimeout(()=>{
+                            c1.textContent = '';
+                            c2.textContent = '';
+                            c1.classList.remove('flipped','wrong');
+                            c2.classList.remove('flipped','wrong');
+                        },400);
+                    }
+
+                    flippedCards = [];
+                    document.getElementById('score').textContent = `Score: ${score}`;
+
+                    // CHECK WIN
+                    if(matchedPairs === cardsArray.length/2){
+                        goResult(true); // LEVEL COMPLETE
+                        return;
+                    }
+
+                    // CHECK FAIL: EXCEED MOVES
+                    if(moves >= maxMoves && matchedPairs < cardsArray.length/2){
+                        goResult(false); // LEVEL FAILED
+                        return;
+                    }
+
+                }, 600);
+            }
+        });
+    });
+}
+
+
+// CLASSIC MODE (used by Timer and Brain)
+function startClassicMode(){
+    createSingleBoard();
+    const allCards = Array.from(document.querySelectorAll('#gameBoard .card'));
+    flippedCards = [];
+
+    allCards.forEach(card => {
+        card.addEventListener('click', () => {
+            if(card.classList.contains('flipped') || flippedCards.length === 2) return;
+
+            card.textContent = card.dataset.emoji;
+            card.classList.add('flipped');
+            flipSound.currentTime = 0; flipSound.play();
+            flippedCards.push(card);
+
+            if(flippedCards.length === 2){
+                const [c1,c2] = flippedCards;
+                moves++;
+
+                setTimeout(()=>{
+                    if(c1.dataset.emoji === c2.dataset.emoji){
+                        matchedPairs++;
+                        score += 10;
+                        c1.classList.add('matched');
+                        c2.classList.add('matched');
+                        matchSound.currentTime = 0; matchSound.play();
+                    } else {
+                        c1.classList.add('wrong');
+                        c2.classList.add('wrong');
+                        setTimeout(()=>{
+                            c1.textContent = '';
+                            c2.textContent = '';
+                            c1.classList.remove('flipped','wrong');
+                            c2.classList.remove('flipped','wrong');
+                        },400);
+                    }
+
+                    flippedCards = [];
+                    document.getElementById('score').textContent = `Score: ${score}`;
+
+                    if(matchedPairs === totalCards/2) goResult(true);
+
+                },600);
+            }
+        });
+    });
+}
+
+// BOMB MODE
+function startBombMode() {
+    let normalEmojis = emojis.slice(0, pairs - 1);
+    let bombEmoji = '💣';
+    let normalPairs = normalEmojis.concat(normalEmojis);
+    let bombPair = [bombEmoji, bombEmoji];
+    cardsArray = normalPairs.concat(bombPair);
+    cardsArray.sort(() => Math.random()-0.5);
+
+    createSingleBoard();
+
+    const allCards = Array.from(document.querySelectorAll('#gameBoard .card'));
+    let flippedThisTurn = [];
+    let normalMatchedPairs = 0;
+    let gameEnded = false;
+
+    allCards.forEach(card => {
+        card.addEventListener('click', () => {
+            if(gameEnded) return;
+            if(card.classList.contains('flipped') || flippedThisTurn.length === 2) return;
+
+            card.textContent = card.dataset.emoji;
+            card.classList.add('flipped');
+            flipSound.currentTime = 0; flipSound.play();
+            flippedThisTurn.push(card);
+
+            if(flippedThisTurn.length === 2){
+                const [c1,c2] = flippedThisTurn;
+                moves++;
+                flippedThisTurn = [];
+
+                setTimeout(()=>{
+                    if(gameEnded) return;
+
+                    if(c1.dataset.emoji === bombEmoji && c2.dataset.emoji === bombEmoji){
+                        c1.classList.add('matched');
+                        c2.classList.add('matched');
+                        matchSound.currentTime = 0; matchSound.play();
+                        gameEnded = true;
+                        setTimeout(()=>goResult(false),0);
+                        return;
+                    }
+
+                    if(c1.dataset.emoji === c2.dataset.emoji){
+                        normalMatchedPairs++;
+                        score += 10;
+                        c1.classList.add('matched');
+                        c2.classList.add('matched');
+                        matchSound.currentTime = 0; matchSound.play();
+                    } else {
+                        c1.classList.add('wrong');
+                        c2.classList.add('wrong');
+                        setTimeout(()=>{
+                            c1.textContent = '';
+                            c2.textContent = '';
+                            c1.classList.remove('flipped','wrong');
+                            c2.classList.remove('flipped','wrong');
+                        },400);
+                    }
+
+                    document.getElementById('score').textContent = `Score: ${score}`;
+
+                    if(normalMatchedPairs === pairs - 1){
+                        gameEnded = true;
+                        setTimeout(()=>goResult(true),0);
+                    }
+
+                },600);
+            }
+        });
+    });
+}
+
+// ===== BUDDY BATTLE MODE =====
+function startBuddyBattle() {
+    document.getElementById('singleContainer').style.display = 'none';
+    document.getElementById('buddyContainer').style.display = 'flex';
+
+    const board1 = document.getElementById('gameBoard1');
+    const board2 = document.getElementById('gameBoard2');
+
+    function createDeck() {
+        let deck = emojis.slice(0, pairs).concat(emojis.slice(0, pairs));
+        deck.sort(() => Math.random() - 0.5);
+        return deck;
+    }
+
+    const deck1 = createDeck();
+    const deck2 = createDeck();
+
+    function createBoard(board, deck) {
+        board.innerHTML = '';
+        const columns = Math.ceil(Math.sqrt(deck.length));
+        board.style.gridTemplateColumns = `repeat(${columns}, 90px)`;
+        deck.forEach(emoji => {
+            const card = document.createElement('div');
+            card.classList.add('card');
+            card.dataset.emoji = emoji;
+            board.appendChild(card);
+        });
+        return Array.from(board.querySelectorAll('.card'));
+    }
+
+    const cards1 = createBoard(board1, deck1);
+    const cards2 = createBoard(board2, deck2);
+
+    let currentPlayer = 1;
+    let flippedCards = [];
+    let matched1 = 0, matched2 = 0;
+    let score1 = 0, score2 = 0;
+    let gameEnded = false;
+    let startTime = Date.now();
+
+    function updateTurnDisplay() {
+        document.getElementById('turnDisplay').textContent = `Player ${currentPlayer}'s Turn`;
+        document.getElementById('score').textContent = `P1 Score: ${score1} | P2 Score: ${score2}`;
+    }
+    updateTurnDisplay();
+
+    function getTimePlayed() {
+        const totalSeconds = Math.floor((Date.now() - startTime)/1000);
+        const minutes = String(Math.floor(totalSeconds/60)).padStart(2,'0');
+        const seconds = String(totalSeconds%60).padStart(2,'0');
+        return `${minutes}:${seconds}`;
+    }
+
+    function calculateStars(time) {
+        const totalSeconds = parseInt(time.split(":")[0])*60 + parseInt(time.split(":")[1]);
+        return totalSeconds <= 180 ? 3 : totalSeconds <= 240 ? 2 : 1; // simple example
+    }
+
+    // BUDDY BATTLE END GAME
+function endGame(winner) {
+    gameEnded = true;
+    winSound.currentTime = 0; winSound.play();
+    setTimeout(() => {
+        goResultBuddy(winner);
+    }, 200);
+}
+
+// Buddy Battle Result function
+function goResultBuddy(winner) {
+    const timePlayed = getTimePlayed();
+    window.location.href = `result.html?mode=buddy&score1=${score1}&score2=${score2}&winner=${winner}&time=${timePlayed}&level=${level}&theme=${theme}`;
+    
+
+
+    // Add winner param to URL
+    window.location.href = `result.html?score=${finalScore}&stars=${stars}&time=${timePlayed}&moves=0&bonus=${encodeURIComponent(bonus)}&passed=${passed}&level=${level}&winner=${winner}`;
+}
+
+    function handleClick(card, player) {
+        if(gameEnded || card.classList.contains('flipped') || flippedCards.length === 2) return;
+
+        card.textContent = card.dataset.emoji;
+        card.classList.add('flipped');
+        flipSound.currentTime = 0; flipSound.play();
+        flippedCards.push(card);
+
+        if(flippedCards.length === 2) {
+            setTimeout(() => {
+                const [c1, c2] = flippedCards;
+                flippedCards = [];
+
+                if(c1.dataset.emoji === c2.dataset.emoji) {
+                    c1.classList.add('matched');
+                    c2.classList.add('matched');
+                    matchSound.currentTime = 0; matchSound.play();
+
+                    if(player === 1) {
+                        matched1++;
+                        score1 += 10;
+                        if(matched1 === pairs) {
+                            gameEnded = true;
+                            goResult(true, 1); // P1 wins
+                        }
+                    } else {
+                        matched2++;
+                        score2 += 10;
+                        if(matched2 === pairs) {
+                            gameEnded = true;
+                            goResult(true, 2); // P2 wins
+                        }
+                    }
+                    updateTurnDisplay(); // player continues if matched
+                } else {
+                    c1.classList.add('wrong');
+                    c2.classList.add('wrong');
+                    setTimeout(() => {
+                        c1.textContent = '';
+                        c2.textContent = '';
+                        c1.classList.remove('flipped','wrong');
+                        c2.classList.remove('flipped','wrong');
+
+                        currentPlayer = currentPlayer === 1 ? 2 : 1; // switch turn
+                        updateTurnDisplay();
+                    }, 400);
+                }
+            }, 600);
+        }
+    }
+
+    cards1.forEach(card => card.addEventListener('click', () => {
+        if(currentPlayer === 1) handleClick(card, 1);
+    }));
+    cards2.forEach(card => card.addEventListener('click', () => {
+        if(currentPlayer === 2) handleClick(card, 2);
+    }));
+}
+
+// Result function
+function getTimePlayed() {
+    const totalSeconds = Math.floor((Date.now()-startTime)/1000);
+    const minutes = String(Math.floor(totalSeconds/60)).padStart(2,'0');
+    const seconds = String(totalSeconds%60).padStart(2,'0');
+    return `${minutes}:${seconds}`;
+}
+
+function calculateStars(level,time) {
+    const totalSeconds = parseInt(time.split(":")[0])*60 + parseInt(time.split(":")[1]);
+    if(level==="easy") return totalSeconds<=180?3:totalSeconds<=240?2:1;
+    if(level==="medium") return totalSeconds<=300?3:totalSeconds<=420?2:1;
+    if(level==="hard") return totalSeconds<=420?3:totalSeconds<=600?2:1;
+    if(level==="master") return totalSeconds<=600?3:totalSeconds<=780?2:1;
+    return totalSeconds<=900?3:totalSeconds<=1200?2:1;
+}
+
+function goResult(passedOverride) {
+    if(modeTimer) clearInterval(modeTimer);
+    const timePlayed = getTimePlayed();
+    const passed = (typeof passedOverride==='boolean') ? passedOverride : (matchedPairs===totalCards/2);
+    const stars = passed ? calculateStars(level,timePlayed) : 0;
+    const bonus = passed ? (stars===3?"+100 Coins":stars===2?"+50 Coins":"-") : "-";
+
+    // ADD mode and theme to the URL
+    window.location.href = `result.html?score=${score}&stars=${stars}&time=${timePlayed}&moves=${moves}&bonus=${encodeURIComponent(bonus)}&passed=${passed}&level=${level}&mode=${mode}&theme=${theme}`;
+}
+
+// Back button
+function goBack(){ window.location.href='home.html'; }
+
+// Start mode
+function startMode() {
+    if(mode==='classic') startClassicMode();
+    else if(mode==='timer') startTimer(60);
+    else if(mode==='brain') startBrainBurst();
+    else if(mode==='bomb') startBombMode();
+    else if(mode==='buddy') startBuddyBattle();
+}
+
+startMode();
+</script>
+</script>
+
+</body>
+</html>

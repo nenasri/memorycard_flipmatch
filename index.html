@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Card: Flip & Match</title>
+<style>
+  * { box-sizing: border-box; margin:0; padding:0; font-family: Arial,sans-serif; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-image: url('background.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+
+  .card {
+    width: 90%;
+    max-width: 450px;
+    padding: 20px;
+    text-align: center;
+    background: rgba(255,255,255,0.95);
+    border-radius: 20px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .top-icon {
+    width: 50px; height: 50px;
+    background: black; color:white;
+    border-radius:50%;
+    display:flex; justify-content:center; align-items:center;
+    font-size:24px; margin-bottom:15px;
+  }
+
+  .subtitle { font-size:14px; letter-spacing:3px; margin-bottom:8px; font-weight:bold; color:#555; }
+  .title { font-size:32px; font-weight:900; line-height:1.1; margin-bottom:20px; }
+  .and { display:inline-block; background:black; color:white; padding:2px 6px; font-size:14px; margin:0 4px; }
+  .divider { width:60%; height:2px; background:#333; margin:20px auto; }
+
+  .start-btn {
+    width: 80%; max-width:200px;
+    background:black; color:white; border:none; border-radius:30px;
+    padding:12px; font-size:16px; cursor:pointer; margin-bottom:15px;
+    transition: all 0.3s ease;
+  }
+  .start-btn:hover { opacity:0.85; transform:scale(1.05); }
+
+  .bottom-icons {
+    display:flex; justify-content:center; gap:15px; flex-wrap:wrap;
+  }
+  .icon {
+    width:45px; height:45px; background:black; color:white; border-radius:50%;
+    display:flex; justify-content:center; align-items:center;
+    font-size:20px; cursor:pointer; text-decoration:none; transition:0.2s;
+  }
+  .icon:hover { background:#444; transform:scale(1.1); }
+
+  @media(max-width: 400px) {
+    .top-icon { width:40px; height:40px; font-size:20px; margin-bottom:10px; }
+    .title { font-size:24px; }
+    .subtitle { font-size:12px; letter-spacing:2px; }
+    .start-btn { font-size:14px; padding:10px; }
+    .divider { width:80%; }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <div class="top-icon">👤</div>
+  <div class="subtitle">MEMORY CARD</div>
+  <div class="title">FLIP <span class="and">AND</span><br>MATCH</div>
+  <div class="divider"></div>
+
+  <!-- START BUTTON (KEKAL) -->
+  <button class="start-btn" onclick="startGame()">START</button>
+
+  <div class="bottom-icons">
+    <a href="achievement.html" class="icon" title="Achievements">🏆</a>
+    <a href="instruction.html" class="icon" title="Instructions">ℹ️</a>
+    <a href="setting.html" class="icon" title="Settings">⚙️</a>
+  </div>
+</div>
+
+<script>
+
+function startGame() {
+  window.location.href = "level.html";
+}
+</script>
+
+</body>
+</html>

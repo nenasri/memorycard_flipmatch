@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leaderboard</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('background.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: white;
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.container {
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid whitesmoke;
+  border-radius: 15px;
+  padding: 30px 20px;
+  max-width: 450px;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 5px black;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+th, td {
+  padding: 12px 10px;
+}
+
+th {
+  background-color: black;
+  color: white;
+}
+
+tr:nth-child(even) {
+  background: rgba(255,255,255,0.05);
+}
+
+tr.current-player {
+  background: gold;
+  color: black;
+  font-weight: bold;
+}
+
+button {
+  padding: 12px 30px;
+  font-size: 1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  background-color: yellow;
+  color: black;
+  transition: 0.3s;
+  margin-bottom: 10px;
+}
+
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px yellow;
+}
+
+#nextLevelBtn {
+  display: none; /* initially hidden */
+  background: linear-gradient(145deg, #ffeb3b, #fff176);
+  color: #333;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 36px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+  transition: transform 0.2s, box-shadow 0.2s, background 0.3s;
+}
+#nextLevelBtn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px #fff176;
+  background: linear-gradient(145deg, #fff176, #ffeb3b);
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🏆 Leaderboard</h1>
+
+  <table id="leaderboardTable">
+    <thead>
+      <tr>
+        <th>RANK</th>
+        <th>NAME</th>
+        <th>SCORE</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- NEXT LEVEL BUTTON -->
+  <button id="nextLevelBtn">➡ Next Level</button>
+  <button onclick="goHome()">🏠 Back to Home</button>
+</div>
+
+<script>
+// Get leaderboard from localStorage
+let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
+
+// Get current player info from URL
+const urlParams = new URLSearchParams(window.location.search);
+const currentPlayerName = urlParams.get('name') || 'YOU';
+const currentPlayerScore = parseInt(urlParams.get('score')) || 0;
+const passed = urlParams.get('passed') === 'true';  // level passed?
+const level = urlParams.get('level') || 'easy';
+const mode = urlParams.get('mode') || 'classic';
+const theme = urlParams.get('theme') || 'fruits';
+
+// Update leaderboard
+const existingPlayer = leaderboard.find(p => p.name === currentPlayerName);
+if(existingPlayer){
+    if(currentPlayerScore > existingPlayer.score){
+        existingPlayer.score = currentPlayerScore;
+    }
+} else {
+    leaderboard.push({ name: currentPlayerName, score: currentPlayerScore });
+}
+leaderboard.sort((a,b)=>b.score - a.score);
+localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+
+// Display leaderboard
+const tbody = document.querySelector('#leaderboardTable tbody');
+tbody.innerHTML = '';
+leaderboard.forEach((entry,index)=>{
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${index+1}</td><td>${entry.name}</td><td>${entry.score}</td>`;
+  if(entry.name === currentPlayerName) tr.classList.add('current-player');
+  tbody.appendChild(tr);
+});
+
+// HOME BUTTON
+function goHome(){ window.location.href='home.html'; }
+
+// NEXT LEVEL BUTTON
+const nextLevelBtn = document.getElementById('nextLevelBtn');
+const levels = ['easy','medium','hard','master','legend'];
+let nextIndex = levels.indexOf(level) + 1;
+
+if(passed){
+  if(nextIndex < levels.length){
+    nextLevelBtn.style.display = 'block';
+    nextLevelBtn.onclick = () => {
+      const nextLevel = levels[nextIndex];
+      // keep SAME MODE and SAME THEME
+      window.location.href = `game.html?mode=${mode}&level=${nextLevel}&theme=${theme}&name=${currentPlayerName}`;
+    };
+  } else {
+    nextLevelBtn.style.display = 'block';
+    nextLevelBtn.textContent = "🏁 All Levels Completed";
+    nextLevelBtn.disabled = true;
+  }
+}
+</script>
+
+</body>
+</html>
